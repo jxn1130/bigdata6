@@ -22,33 +22,24 @@ import numpy as np
 from deepctr.models import DeepFM
 from deepctr.feature_column import SparseFeat, get_feature_names
 
-
+#데이터 불러오기
 train = pd.read_csv("./dataset/book/train.csv")
 test = pd.read_csv("./dataset/book/test.csv")
 
-
-# In[2]:
 
 
 # 'User-ID'를 기준으로 각 행에 해당하는 'Book-Rating'의 평균 값을 가져와서 새로운 열로 추가
 train['Rating-Mean'] = train['User-ID'].map(train.groupby('User-ID')['Book-Rating'].mean())
 
+#상대적인 점수를 구해 새로운 열에 할당
 train['individual_point'] = train['Rating-Mean']-train['Book-Rating']
 
-
-
-
+#기존의 ['Book-Rating']과 동일하게 최소 0, 최대 10의 값으로 변환
 train['new_Rating'] = ((train['individual_point'] - train['individual_point'].min()) / (train['individual_point'].max() - train['individual_point'].min())) * 10
 
 
 
-
 combined_df = pd.concat([train, test])
-
-
-
-# In[5]:
-
 
 #모든 열 라벨인코딩
 cat_cols = ["ID", "User-ID", "Book-ID", "Age", "Location", "Book-Title", "Year-Of-Publication", "Book-Author", "Publisher"]
@@ -57,7 +48,6 @@ cat_cols = ["ID", "User-ID", "Book-ID", "Age", "Location", "Book-Title", "Year-O
 for col in cat_cols:
     le = LabelEncoder()
     combined_df[col] = le.fit_transform(combined_df[col].astype(str))
-
 
 
 # MinMaxScaler
@@ -100,18 +90,11 @@ output_layer = Dense(1, activation='relu')(concat_embeddings)
 model = Model(inputs=list(inputs.values()), outputs=output_layer)
 
 # 모델 컴파일
-model.compile(optimizer='adam', loss='mean_squared_error', metrics=['mse'])
+model.compile(optimizer='adam', loss='mse')
 
 # 모델 학습
 history = model.fit(train_model_input, train[target].values,
                     batch_size=256, epochs=10, verbose=2, validation_split=0.2)
 
-# 모델 평가
-#pred_ans = model.predict(test_model_input, batch_size=256)
-#mse = mean_squared_error(test[target].values, pred_ans)
-#print("RMSE:", np.sqrt(mse))
 
 
-# 
-
-# 
